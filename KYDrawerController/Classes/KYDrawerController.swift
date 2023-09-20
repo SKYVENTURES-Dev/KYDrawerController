@@ -36,6 +36,20 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
     // MARK: - Types
     /**************************************************************************/
     
+    private var barStyle: UIStatusBarStyle = .lightContent {
+        willSet {
+            setNeedsStatusBarAppearanceUpdate()
+        }
+    }
+
+    open override var preferredStatusBarStyle: UIStatusBarStyle {
+        return barStyle
+    }
+    
+    public func changeStatusBarStyle(style: UIStatusBarStyle) {
+        barStyle = style
+    }
+    
     @objc public enum DrawerDirection: Int {
         case left, right
     }
@@ -124,7 +138,7 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
     
     public var drawerState: DrawerState {
         get { return _containerView.isHidden ? .closed : .opened }
-        set { setDrawerState(newValue, animated: false) }
+        set { setDrawerState(drawerState, animated: false) }
     }
     
     @IBInspectable public var drawerWidth: CGFloat = 280 {
@@ -142,26 +156,14 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
 
     public var mainViewController: UIViewController! {
         didSet {
-            let isVisible = (drawerState == .closed)
-            
             if let oldController = oldValue {
                 oldController.willMove(toParent: nil)
-                if isVisible {
-                    oldController.beginAppearanceTransition(false, animated: false)
-                }
                 oldController.view.removeFromSuperview()
-                if isVisible {
-                    oldController.endAppearanceTransition()
-                }
                 oldController.removeFromParent()
             }
 
             guard let mainViewController = mainViewController else { return }
             addChild(mainViewController)
-            
-            if isVisible {
-                mainViewController.beginAppearanceTransition(true, animated: false)
-            }
 
             mainViewController.view.translatesAutoresizingMaskIntoConstraints = false
             view.insertSubview(mainViewController.view, at: 0)
@@ -183,10 +185,6 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
                     views: viewDictionary
                 )
             )
-            
-            if isVisible {
-                mainViewController.endAppearanceTransition()
-            }
 
             mainViewController.didMove(toParent: self)
         }
@@ -194,26 +192,14 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
     
     public var drawerViewController : UIViewController? {
         didSet {
-            let isVisible = (drawerState == .opened)
-            
             if let oldController = oldValue {
                 oldController.willMove(toParent: nil)
-                if isVisible {
-                    oldController.beginAppearanceTransition(false, animated: false)
-                }
                 oldController.view.removeFromSuperview()
-                if isVisible {
-                    oldController.endAppearanceTransition()
-                }
                 oldController.removeFromParent()
             }
 
             guard let drawerViewController = drawerViewController else { return }
             addChild(drawerViewController)
-            
-            if isVisible {
-                drawerViewController.beginAppearanceTransition(true, animated: false)
-            }
 
             drawerViewController.view.layer.shadowColor   = UIColor.black.cgColor
             drawerViewController.view.layer.shadowOpacity = 0.4
@@ -265,11 +251,6 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
             )
 
             _containerView.layoutIfNeeded()
-            
-            if isVisible {
-                drawerViewController.endAppearanceTransition()
-            }
-            
             drawerViewController.didMove(toParent: self)
         }
     }
@@ -299,6 +280,8 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         let viewDictionary = ["_containerView": _containerView]
+        
+        modalPresentationCapturesStatusBarAppearance = true
         
         view.addGestureRecognizer(screenEdgePanGesture)
         view.addGestureRecognizer(panGesture)
